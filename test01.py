@@ -50,7 +50,7 @@ with mp_hands.Hands(model_complexity=0, min_detection_confidence=0.6, min_tracki
     center_y = int(height // 2 * (1 + 0.85))
     a = "CENTRO DA MASSA FM É TUDO DE BOM"
     cv2.putText(image, str(a), (center_x, center_y-10), cv2.FONT_HERSHEY_SIMPLEX,0.5, (255, 0, 0), 1, cv2.LINE_AA)
-    cv2.line(image, (center_x,center_y), ("FALTA")), (0, 255, 0), 2)
+    # cv2.line(image, (center_x,center_y), ("FALTA")), (0, 255, 0), 2)
 
     print(f"Centro da tela: x={center_x}, y={center_y}")
 
