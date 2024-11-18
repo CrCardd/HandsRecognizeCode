@@ -5,8 +5,6 @@ import time
 import math3d as m3d
 import math
 
-import rtde_control
-import rtde_receive
 
 # Constants for hand tracking
 MAX_DIST_Z = 0.24
@@ -49,9 +47,6 @@ origin = None
 robot.init_realtime_control()
 time.sleep(1)
 
-# RTDE Setup for monitoring
-rtde_c = rtde_control.RTDEControlInterface(ROBOT_IP)
-rtde_r = rtde_receive.RTDEReceiveInterface(ROBOT_IP)
 
 
 def find_hands(image):
@@ -118,6 +113,10 @@ while True:
     if results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0].landmark
         move_to_hand(hand_landmarks, robot_position)
+
+    temperature = robot.get_robot_temperature()  # Query the robot's temperature
+    if temperature is not None:
+        print(f"Robot Temperature: {temperature} °C")
 
 
     cv2.imshow("Hand Tracking", frame)

@@ -8,11 +8,11 @@ ROBOT_IP = '169.254.41.22'
 
 # Conectando ao robô com URBasic (controle de movimento)
 robotModel = URBasic.robotModel.RobotModel()
-robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_IP, robotModel=robotModel)
+# robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_IP, robotModel=robotModel)
 
 # Inicializando controle de movimento (URBasic)
-robot.reset_error()
-robot.init_realtime_control()
+# robot.reset_error()
+# robot.init_realtime_control()
 time.sleep(1)
 
 # Conectando ao robô com RTDE para monitoramento em tempo real
@@ -23,7 +23,7 @@ rtde_r = rtde_receive.RTDEReceiveInterface(ROBOT_IP)
 def move_robot():
     # Movimento do robô usando URBasic
     joint_positions = [0.5, 0.0, 0.1, 0.0, 1.57, 0.0]  # Exemplo de posição
-    robot.movej(joint_positions, a=0.5, v=0.5)
+    # robot.movej(joint_positions, a=0.5, v=0.5)
     print("Comando de movimento enviado com URBasic!")
 
 # Função para monitorar as posições das juntas com RTDE

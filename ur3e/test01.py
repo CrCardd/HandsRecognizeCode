@@ -35,7 +35,7 @@ vs.set(cv2.CAP_PROP_FRAME_HEIGHT, video_resolution[1])
 print("initialising robot")
 robotModel = URBasic.robotModel.RobotModel()
 robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_IP, robotModel=robotModel)
-
+    
 robot.reset_error()
 print("robot initialised")
 time.sleep(1)

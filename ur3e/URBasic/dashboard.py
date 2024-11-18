@@ -95,7 +95,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Loading program: <program.urp>" OR "File not found: <program.urp>"
         '''
-        self.__send('load ' + file + '\n')
+        self._send('load ' + file + '\n')
 
     def ur_play(self):
         '''
@@ -104,7 +104,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Starting program"
         '''
-        self.__send('play\n')
+        self._send('play\n')
         
     def ur_stop(self):
         '''
@@ -113,7 +113,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Stopped"
         '''
-        self.__send('stop\n')
+        self._send('stop\n')
 
 
     def ur_pause(self):
@@ -123,7 +123,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Pausing program"
         '''
-        self.__send('pause\n')
+        self._send('pause\n')
 
 
     def ur_shutdown(self):
@@ -133,7 +133,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Shutting down"
         '''
-        self.__send('shutdown\n')
+        self._send('shutdown\n')
         
     def ur_running(self):
         '''
@@ -142,7 +142,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Robot running: True" OR "Robot running: False"
         '''
-        self.__send('running\n')
+        self._send('running\n')
         
     def ur_robotmode(self):
         '''
@@ -160,7 +160,7 @@ class DashBoard(threading.Thread):
         BACKDRIVE
         RUNNING
         '''
-        self.__send('robotmode\n')
+        self._send('robotmode\n')
 
     def ur_get_loaded_program(self):
         '''
@@ -169,7 +169,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Program loaded: <path to loaded program file>" OR "No program loaded"
         '''
-        self.__send('get loaded program\n')
+        self._send('get loaded program\n')
 
     def ur_popup(self,  popupText=''):
         '''
@@ -178,7 +178,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "showing popup"
         '''
-        self.__send('popup ' + popupText + '\n')
+        self._send('popup ' + popupText + '\n')
 
     def ur_close_popup(self):
         '''
@@ -187,7 +187,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "closing popup"
         '''
-        self.__send('close popup\n')
+        self._send('close popup\n')
 
     def ur_addToLog(self, logMessage):
         '''
@@ -196,7 +196,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Added log message" Or "No log message to add"
         '''
-        self.__send('addToLog ' + logMessage + '\n')
+        self._send('addToLog ' + logMessage + '\n')
 
     def ur_setUserRole(self, role):
         '''
@@ -205,7 +205,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Setting user role: <role>" OR "Failed setting user role: <role>"
         '''
-        self.__send('setUserRole ' + role + '\n')
+        self._send('setUserRole ' + role + '\n')
 
     def ur_isProgramSaved(self):
         '''
@@ -214,7 +214,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "True" OR "False"
         '''
-        self.__send('isProgramSaved\n')
+        self._send('isProgramSaved\n')
 
     def ur_programState(self):
         '''
@@ -223,7 +223,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "STOPPED" if no program is running OR "PLAYING" if program is running
         '''
-        self.__send('programState\n')
+        self._send('programState\n')
 
     def ur_polyscopeVersion(self):
         '''
@@ -232,7 +232,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         version number, like "3.0.15547"
         '''
-        self.__send('polyscopeVersion\n')
+        self._send('polyscopeVersion\n')
 
     def ur_setUserRole_where(self, role, level):
         '''
@@ -250,7 +250,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Setting user role: <role>" OR "Failed setting user role: <role>"
         '''
-        self.__send('setUserRole '+ role + ', where ' + role + ' is' + level +'\n')
+        self._send('setUserRole '+ role + ', where ' + role + ' is' + level +'\n')
 
     def ur_power_on(self):
         '''
@@ -259,7 +259,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Powering on"
         '''
-        self.__send('power on\n')
+        self._send('power on\n')
 
     def ur_power_off(self):
         '''
@@ -268,7 +268,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Powering off"
         '''
-        self.__send('power off\n')
+        self._send('power off\n')
 
     def ur_brake_release(self):
         '''
@@ -277,7 +277,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Brake releasing"        
         '''
-        self.__send('brake release\n')
+        self._send('brake release\n')
 
     def ur_safetymode(self):
         '''
@@ -296,7 +296,7 @@ class DashBoard(threading.Thread):
         VIOLATION
         FAULT        
         '''
-        return self.__send('safetymode\n')
+        return self._send('safetymode\n')
 
     def ur_unlock_protective_stop(self):
         '''
@@ -305,7 +305,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Protective stop releasing"
         '''
-        self.__send('unlock protective stop\n')
+        self._send('unlock protective stop\n')
 
     def ur_close_safety_popup(self):
         '''
@@ -314,7 +314,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "closing safety popup"        
         '''
-        self.__send('close safety popup\n')
+        self._send('close safety popup\n')
 
     def ur_load_installation(self, instal='default.installation'):
         '''
@@ -323,7 +323,7 @@ class DashBoard(threading.Thread):
         Return value to Log file:
         "Loading installation: <default.installation>" OR "File not found: <default.installation>"
         '''
-        self.__send('load installation '+ instal +'\n')
+        self._send('load installation '+ instal +'\n')
 
         
     
@@ -436,7 +436,7 @@ class DashBoard(threading.Thread):
         with self.__dataEvent:
             self.__dataEvent.wait()
         
-    def __send(self, cmd):
+    def _send(self, cmd):
         '''
         Send command to Robot Controller. 
 
