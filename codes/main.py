@@ -1,8 +1,13 @@
 import cv2
 import mediapipe as mp
+import math
+import time
 
 MAX_DIST_Z = 0.05
 MIN_DIST_Z = 0.03
+
+MIN_HAND_SIZE = 47
+MAX_HAND_SIZE = 100 
 # Initialize MediaPipe Hands module
 hands = mp.solutions.hands
 Hands = hands.Hands(max_num_hands=2)
@@ -26,13 +31,7 @@ while cap.isOpened():
     results = Hands.process(frame_rgb)
     handPoints = results.multi_hand_landmarks
     h, w, _ = frame.shape
-    polegar_levantado = False
-    indicador_levantado = False
-    medio_abaixado = False
-    anelar_abaixado = False
-    minimo_levantado = False
     if handPoints:
-        center_z_hand = 0
 
         for points in handPoints:   
             mpDwaw.draw_landmarks(frame, points,hands.HAND_CONNECTIONS)
@@ -47,8 +46,23 @@ while cap.isOpened():
         hand_distance_x = abs(handPoints[0].landmark[1].x - handPoints[0].landmark[17].x)
         hand_distance_y = abs(handPoints[0].landmark[1].y - handPoints[0].landmark[17].y)
         
-        hand_size = (hand_distance_x*hand_distance_x + hand_distance_y*hand_distance_y) ** 0.5
-        print(hand_size)
+        hand_size = (w * (hand_distance_x*hand_distance_x + hand_distance_y*hand_distance_y) ** 0.5)
+        
+        if(hand_size > MAX_HAND_SIZE):
+            hand_distance_center_z = 600
+        elif(hand_size < MIN_HAND_SIZE):
+            hand_distance_center_z = 1
+        else:
+            hand_distance_center_z = (hand_size - MIN_HAND_SIZE) / (MAX_HAND_SIZE - MIN_HAND_SIZE) * w - (w/2)
+        
+        hand_distance_center_x = center_x_hand - (w/2)
+        
+        angle_rad = math.atan2(hand_distance_center_z, hand_distance_center_x)
+        
+
+        print(hand_distance_center_z, hand_distance_center_x)
+        print(angle_rad)
+        time.sleep(1)
 
         closed_hand = True
         for i in range(4,21,4):
