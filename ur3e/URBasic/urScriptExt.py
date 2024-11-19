@@ -108,42 +108,6 @@ class UrScriptExt(URBasic.urScript.UrScript):
         # return self.get_robot_status()['PowerOn'] & (not self.get_safety_status()['StoppedDueToSafety'])
         return self.robotConnector.RobotModel.RobotStatus().PowerOn and not self.robotConnector.RobotModel.SafetyStatus().StoppedDueToSafety
 
-    def _send(self, cmd):
-        '''
-        Sends a command to the robot's UR controller.
-        
-        Input parameters:
-        cmd (str): The URScript command to send.
-        
-        Return value:
-        success (boolean): Whether the command was successfully sent or not.
-        '''
-        try:
-            buf = bytes(cmd, 'utf-8')
-            self.robotConnector.RealTimeClient.SendProgram(buf)  # This is just a placeholder
-            self.__logger.info(f"Sent command: {cmd}")
-            return True
-        except Exception as e:
-            self.__logger.error(f"Failed to send command: {cmd}. Error: {e}")
-            return False
-    
-    def __receive(self):
-        '''
-        Receive the response from the Robot Controller.
-        
-        Return value:
-        Output from Robot controller (type is string)
-        '''
-        (readable, _, _) = select.select([self.__sock], [], [], DEFAULT_TIMEOUT)
-        if len(readable):
-            data = self.__sock.recv(1024)
-            if len(data) == 0:
-                return None
-            
-            fmt = ">" + str(len(data)) + "B"
-            out = struct.unpack_from(fmt, data)        
-            return ''.join(map(chr, out[:-1]))
-
     def get_in(self, port, wait=True):
         '''
         Get input signal level
@@ -711,44 +675,6 @@ end
         print the actual TCP pose
         '''
         self.print_pose(q=self.get_actual_joint_positions())
-
-    def ur_get_robot_temperature(self):
-        '''
-        Get the temperature of the robot's motors.
-        Sends the URScript command to query robot temperature.
-        '''
-        # Send the URScript command to get the robot's temperature'
-        self._send('get_robot_temperature()\n')
-
-    def handle_temperature_response(self, response):
-        '''
-        Handle and log the robot's temperature response.
-        
-        Return value:
-        None
-        '''
-        try:
-            # Parsing the response for temperature value
-            # The temperature response is usually a numeric value in a string
-            temperature = float(response.strip())  # Convert response to float
-            self.__logger.info(f"Robot temperature: {temperature} °C")
-            return temperature
-        except Exception as e:
-            self.__logger.error(f"Failed to parse robot temperature: {e}")
-            return None
-        
-    def get_robot_temperature(self):
-        '''
-        Retrieve and log the robot's motor temperature.
-        '''
-        self.ur_get_robot_temperature()  # Send the command to get temperature
-        response = self.__receive()  # Receive the response from the robot
-        if response:
-            temperature = self.handle_temperature_response(response)  # Handle the response
-            return temperature
-        else:
-            self.__logger.error("Failed to get robot temperature - no response.")
-            return None
 
     def print_pose(self, pose=None, q=None):
         '''

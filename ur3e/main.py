@@ -7,8 +7,8 @@ import math
 
 
 # Constants for hand tracking
-MAX_DIST_Z = 0.24
-MIN_DIST_Z = 0.24
+MIN_HAND_SIZE = 47
+MAX_HAND_SIZE = 100 
 
 # Initialize MediaPipe Hands module
 hands = mp.solutions.hands
@@ -65,29 +65,40 @@ def move_to_hand(hand_landmarks, robot_pos):
             (hand_landmarks[1].x + hand_landmarks[1].x) / 2, 
             (hand_landmarks[1].y + hand_landmarks[1].y) / 2
         )
+
         hand_distance_x = abs(hand_landmarks[1].x - hand_landmarks[17].x)
         hand_distance_y = abs(hand_landmarks[1].y - hand_landmarks[17].y)
-        hand_size = (hand_distance_x*hand_distance_x + hand_distance_y*hand_distance_y) ** 0.5
 
+        hand_size = (video_resolution[0] * (hand_distance_x*hand_distance_x + hand_distance_y*hand_distance_y) ** 0.5)
+        
+        if(hand_size > MAX_HAND_SIZE):
+            hand_distance_center_z = 600
+        elif(hand_size < MIN_HAND_SIZE):
+            hand_distance_center_z = 1
+        else:
+            hand_distance_center_z = (hand_size - MIN_HAND_SIZE) / (MAX_HAND_SIZE - MIN_HAND_SIZE) * video_resolution[0] - (video_resolution[0]/2)
+        hand_distance_center_x = hand_center[0] - (video_resolution[0]/2)
+        
+        angle_rad = math.atan2(hand_distance_center_z, hand_distance_center_x)
 
-        scale_x = 2.5   
-        scale_y = 2.5   
-        scale_z = 1    
+        # scale_x = 2.5   
+        # scale_y = 2.5   
+        scale_z = 2.5    
 
-        x_pos = hand_center[0] * scale_x
-        y_pos = hand_center[1] * scale_y
-        z_pos = 0 #hand_size * scale_z 
+        # x_pos = hand_center[0] * scale_x
+        # y_pos = hand_center[1] * scale_y
+        z_pos = angle_rad * scale_z 
 
-        robot_target_position = [robot_pos[0] + x_pos, robot_pos[1] + y_pos, robot_pos[2] + z_pos]
-        robot_target_position = check_max_xy(robot_target_position)
+        # robot_target_position = [robot_pos[0] + x_pos, robot_pos[1] + y_pos, robot_pos[2] + z_pos]
+        # robot_target_position = check_max_xy(robot_target_position)
 
         
 
 
 
-        joint_position[0] += x_pos   
-        joint_position[1] += y_pos
-        # joint_position[2] += z_pos
+        # joint_position[0] += x_pos   
+        # joint_position[1] += y_pos
+        joint_position[0] = z_pos
 
         robot.movej(q=joint_position, a=ACCELERATION, v=VELOCITY)
 
@@ -113,10 +124,6 @@ while True:
     if results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0].landmark
         move_to_hand(hand_landmarks, robot_position)
-
-    temperature = robot.get_robot_temperature()  # Query the robot's temperature
-    if temperature is not None:
-        print(f"Robot Temperature: {temperature} °C")
 
 
     cv2.imshow("Hand Tracking", frame)

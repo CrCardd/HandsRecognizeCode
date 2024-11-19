@@ -3,11 +3,9 @@ import mediapipe as mp
 import math
 import time
 
-MAX_DIST_Z = 0.05
-MIN_DIST_Z = 0.03
-
 MIN_HAND_SIZE = 47
 MAX_HAND_SIZE = 100 
+
 # Initialize MediaPipe Hands module
 hands = mp.solutions.hands
 Hands = hands.Hands(max_num_hands=2)
@@ -62,24 +60,20 @@ while cap.isOpened():
 
         print(hand_distance_center_z, hand_distance_center_x)
         print(angle_rad)
-        time.sleep(1)
 
-        closed_hand = True
-        for i in range(4,21,4):
-            finger_distance_x = abs(center_x_hand - w * handPoints[0].landmark[i].x)
-            finger_distance_y = abs(center_y_hand - h * handPoints[0].landmark[i].y)
-            finger_distance = (finger_distance_x*finger_distance_x + finger_distance_y*finger_distance_y) ** 0.5
-            finger_distance_color = (100,255,100)
-            if not finger_distance <= hand_size / 1.3:
-                closed_hand = False 
-                finger_distance_color = (100,100,255)
-            cv2.line(frame, (int(w * handPoints[0].landmark[i].x), int(h * handPoints[0].landmark[i].y)), (center_x_hand, center_y_hand), finger_distance_color, 1)
-            
+        # closed_hand = True
+        # for i in range(8,21,4):
+        #     finger_distance_x = abs(center_x_hand - w * handPoints[0].landmark[i].x)
+        #     finger_distance_y = abs(center_y_hand - h * handPoints[0].landmark[i].y)
+        #     finger_distance = (finger_distance_x*finger_distance_x + finger_distance_y*finger_distance_y) ** 0.5
+        #     finger_distance_color = (100,255,100)
+        #     if not finger_distance <= hand_size / 1.3:
+        #         closed_hand = False 
+        #         finger_distance_color = (100,100,255)
+        #     cv2.line(frame, (int(w * handPoints[0].landmark[i].x), int(h * handPoints[0].landmark[i].y)), (center_x_hand, center_y_hand), finger_distance_color, 1)
 
-
-
-        if closed_hand:
-            cv2.putText(frame, str("MAO NOT ABRIDA"), (20,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        # if closed_hand:
+        #     cv2.putText(frame, str("MAO NOT ABRIDA"), (20,30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
             
 
 
