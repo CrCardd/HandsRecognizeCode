@@ -1,4 +1,4 @@
-from rtde_receive import RTDEReceiveInterface
+from rtde_receive import RTDEReceiveInterface # py -m pip install ur-rtde
 import cv2 
 import mediapipe as mp
 import URBasic
