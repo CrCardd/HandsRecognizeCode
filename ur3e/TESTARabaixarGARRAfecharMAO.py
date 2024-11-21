@@ -1,4 +1,4 @@
-
+from rtde_receive import RTDEReceiveInterface
 import cv2 
 import mediapipe as mp
 import URBasic
@@ -12,7 +12,7 @@ SCREEN_CENTER = (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
 
 # Initialize MediaPipe Hands module
 hands = mp.solutions.hands
-Hands = hands.Hands(max_num_hands=2)
+Hands = hands.Hands(max_num_hands=1)
 mpDraw = mp.solutions.drawing_utils
 
 # Initialize robot settings
@@ -33,6 +33,7 @@ vs.set(cv2.CAP_PROP_FRAME_HEIGHT, video_resolution[1])
 
 # Initialize robot with URBasic
 print("initializing robot")
+rtde_receive = RTDEReceiveInterface(ROBOT_IP)
 robotModel = URBasic.robotModel.RobotModel()
 robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_IP, robotModel=robotModel)
 
@@ -85,7 +86,7 @@ def lower_hand(hand_landmarks, current_pos):
     joint_1 = initial_joint_positions[0] + current_pos[0]           # Control joint 1 with x
     joint_2 = initial_joint_positions[1] + current_pos[1] + 0.5     # Control joint 2 with y
     joint_3 = initial_joint_positions[2]                            # Control joint 3 with z
-    joint_4 = initial_joint_positions[3] + -0.5                     # Keep default position
+    joint_4 = initial_joint_positions[3] + 0.8                     # Keep default position
     joint_5 = initial_joint_positions[4]                            # Keep default position
     joint_6 = initial_joint_positions[5]                            # Keep default position
 
@@ -198,6 +199,11 @@ while True:
     if results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0].landmark
         result = move_to_hand(hand_landmarks, robot_position,frame)
+        try:
+            joint_temperatures = rtde_receive.getJointTemperatures()
+            print("Joint Temperatures: ", joint_temperatures)
+        except Exception as e:
+            print("Error:", e)
 
         if result:
             lower_hand(hand_landmarks, result)
@@ -213,3 +219,4 @@ while True:
 # Release video capture and close windows
 vs.release()
 cv2.destroyAllWindows()
+rtde_receive.disconnect()
