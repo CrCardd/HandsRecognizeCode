@@ -42,12 +42,9 @@ def move_to_hand(hand_landmarks, frame):
         int((((hand_landmarks[1].y + hand_landmarks[17].y) / 2 * h) + ((hand_landmarks[0].y + hand_landmarks[5].y) / 2 * h)) / 2),
     )
 
-    screen_y = hand_center[1]
-    screen_x = hand_center[0]
-
-    hand_distance_x = w * abs(hand_landmarks[1].x - hand_landmarks[17].x)
-    hand_distance_y = w * abs(hand_landmarks[1].y - hand_landmarks[17].y)
-    hand_size = (hand_distance_x**2 + hand_distance_y**2) ** 0.5
+    hand_distance_size_x = w * abs(hand_landmarks[1].x - hand_landmarks[17].x)
+    hand_distance_size_y = h * abs(hand_landmarks[1].y - hand_landmarks[17].y)
+    hand_size = (hand_distance_size_x**2 + hand_distance_size_y**2) ** 0.5
 
     cv2.putText(frame, str("(0)"), (hand_center[0], hand_center[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
 
@@ -80,8 +77,31 @@ def move_to_hand(hand_landmarks, frame):
     elif(hand_grip > 97):
         hand_grip = 97
 
-    # hand_grip = int(hand_grip / 10) * 10
-    print(hand_grip)
+    hand_grip = int(hand_grip / 10) * 10
+
+ 
+    hand_top_distance_x = abs(hand_landmarks[5].x - hand_landmarks[17].x)
+    hand_top_distance_y = abs(hand_landmarks[5].y - hand_landmarks[17].y)
+    hand_top_distance = w * ((hand_top_distance_x*hand_top_distance_x) + (hand_top_distance_y*hand_top_distance_y)) ** 0.5
+
+    # print(hand_top_distance)
+    # print(hand_size)
+    # print()
+
+    hand_top_normal_distance = hand_size * 0.7
+    if not hand_top_distance > hand_top_normal_distance:
+
+        rotate_wrist = hand_top_distance / hand_top_normal_distance
+
+        if hand_landmarks[5].z > hand_landmarks[17].z:
+            rotate_wrist *= 1
+        elif hand_landmarks[17].z > hand_landmarks[5].z:
+            rotate_wrist *= -1
+    else:
+        rotate_wrist = 0
+
+
+    print(rotate_wrist)
 
 
 
