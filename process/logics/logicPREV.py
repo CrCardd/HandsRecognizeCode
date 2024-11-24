@@ -41,6 +41,8 @@ def find_hands(image):
 
 def get_hand_grip(hand_landmarks, frame, hand_size):
     h, w, _ = frame.shape
+    print('ENTREI AQUI')
+
 
     hand_grip = 0
     for i in range(8,21,4):
@@ -105,6 +107,7 @@ def get_rotate_wrist(hand_landmarks, frame, hand_size):
 
 
 def move_robot(hand_landmarks, frame):
+
     if not hand_landmarks:
         return
     

@@ -85,8 +85,6 @@ def get_hand_grip(hand_landmarks, frame, hand_size):
         finger_distance = (finger_distance_x*finger_distance_x + finger_distance_y*finger_distance_y) ** 0.5
         hand_grip += finger_distance
 
-        cv2.putText(frame, str("."), (crr_center_x, crr_center_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (100,50,255 - finger_distance), 2)
-        cv2.line(frame, (int(w * hand_landmarks[i].x), int(h * hand_landmarks[i].y)), (crr_center_x, crr_center_y), (20,finger_distance,280 - finger_distance), 1)  #AAAAAAAAAAAAAAAAAAAAAA
     hand_grip /= 4
 
     hand_grip = (int((1 - hand_grip / (hand_size * 1) ) * 100))
@@ -142,8 +140,6 @@ def move_robot(hand_landmarks, frame):
         'y': int((((hand_landmarks[1].y + hand_landmarks[17].y) / 2 * h) + ((hand_landmarks[0].y + hand_landmarks[5].y) / 2 * h)) / 2)
     }
 
-
-    cv2.putText(frame, str("(0)"), (hand_center['x'], hand_center['y']), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
 
     hand_size = get_hand_size(hand_landmarks, frame)
     
@@ -213,7 +209,6 @@ def get_commands():
 def grip_control(hand_landmarks, frame, hand_size):
     hand_grip = get_hand_grip(hand_landmarks, frame, hand_size)
     gripper.set_position(hand_grip)                                   
-    # print(hand_grip)
 
 
 
