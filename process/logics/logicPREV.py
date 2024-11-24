@@ -41,8 +41,6 @@ def find_hands(image):
 
 def get_hand_grip(hand_landmarks, frame, hand_size):
     h, w, _ = frame.shape
-    print('ENTREI AQUI')
-
 
     hand_grip = 0
     for i in range(8,21,4):
@@ -80,6 +78,8 @@ def get_hand_size(hand_landmarks, frame):
     hand_distance_size_x = w * abs(hand_landmarks[1].x - hand_landmarks[17].x)
     hand_distance_size_y = h * abs(hand_landmarks[1].y - hand_landmarks[17].y)
     hand_size = (hand_distance_size_x**2 + hand_distance_size_y**2) ** 0.5
+
+    cv2.line(frame, (int(hand_landmarks[1].x  * w), int(hand_landmarks[1].y * h)), (int(hand_landmarks[17].x * w), int(hand_landmarks[17].y  * h)), (0, 255, 255), 2)
 
     return hand_size
 
@@ -122,12 +122,12 @@ def move_robot(hand_landmarks, frame):
     cv2.putText(frame, str("(0)"), (hand_center['x'], hand_center['y']), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
 
     hand_size = get_hand_size(hand_landmarks, frame)
-    # print(hand_size)
+    print('Hand size:\t', hand_size)
     
     _thread.start_new_thread(grip_control, (hand_landmarks, frame, hand_size))
 
     rotate_wrist = get_rotate_wrist(hand_landmarks, frame, hand_size)
-    # print(rotate_wrist)
+    print('Rotate wrist:\t', rotate_wrist)
 
     displacement_x = (hand_center['x'] - (SCREEN_WIDTH/2)) / SCREEN_WIDTH
     displacement_y = (hand_center['y'] - (SCREEN_HEIGHT/2)) / SCREEN_HEIGHT
@@ -147,7 +147,7 @@ def move_robot(hand_landmarks, frame):
     move_joints[0] += x_pos  
     move_joints[1] += y_pos 
     move_joints[5] += w_pos 
-    # print(move_joints)
+    print('Move joint:\t', move_joints)
 
 
 
@@ -174,7 +174,7 @@ def send_status():
             
         })
         data = ref.get()
-        print(data)
+        print('Robot status (example):\t', data)
 
 
 
@@ -183,14 +183,14 @@ def get_commands():
         ref = db.reference('robot_commands')
 
         commands = ref.get()
-        print(commands)
+        print('Web commands (example):\t', commands)
 
 
 
 def grip_control(hand_landmarks, frame, hand_size):
     hand_grip = get_hand_grip(hand_landmarks, frame, hand_size)
     # gripper.set_position(hand_grip)                                   WHEN GRIPPER
-    # print(hand_grip)
+    print('Hand grip:\t', hand_grip)
 
 
 
@@ -225,7 +225,8 @@ while True:
     results = Hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     if results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0].landmark
-        _thread.start_new_thread(move_robot, (hand_landmarks, frame))
+        # _thread.start_new_thread(move_robot, (hand_landmarks, frame))
+        move_robot(hand_landmarks, frame)
 
     cv2.imshow("Hand Tracking", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
