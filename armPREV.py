@@ -157,10 +157,16 @@ def move_robot(hand_landmarks, frame):
 
     move_joints = initial_joint_positions[:]
     move_joints[0] += x_pos  
-    move_joints[1] += y_pos 
+    if move_joints[1] + y_pos > -2.37:
+        move_joints[1] += y_pos
+    else:
+        move_joints[1] = -2.37
+        move_joints[3] = -0.9
+        print(move_joints[3])
     move_joints[5] += w_pos 
+    
+    print(move_joints)
 
-    # robot.movej(q=move_joints, a=ACCELERATION, v=VELOCITY)
     if not isThreadRunning('Move Robot'):
         t_move_robot = threading.Thread(
             target=robot.movej,
