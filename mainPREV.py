@@ -3,7 +3,7 @@ import mediapipe as mp
 import time
 import firebase_admin
 from firebase_admin import credentials, db
-import _thread
+import threading
 import URBasic
 from rtde_receive import RTDEReceiveInterface
 from gripper import Gripper
@@ -47,7 +47,7 @@ vs = cv2.VideoCapture(0)
 vs.set(cv2.CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH)
 vs.set(cv2.CAP_PROP_FRAME_HEIGHT, SCREEN_HEIGHT)
 
-cred = credentials.Certificate("C:/Users/crist/OneDrive/Área de Trabalho/Repositories/HandsRecognizeCode/src/robotarmtest-firebase-adminsdk-celpj-e13d4bf237.json")
+cred = credentials.Certificate("C:/Users/crist/OneDrive/Área de Trabalho/Repositories/HandsRecognizeCode/src/secrets.json")
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://robotarmtest-default-rtdb.firebaseio.com'
 })
@@ -142,8 +142,11 @@ def move_robot(hand_landmarks, frame):
 
 
     hand_size = get_hand_size(hand_landmarks, frame)
-    
-    _thread.start_new_thread(grip_control, (hand_landmarks, frame, hand_size))
+
+    hand_grip = get_hand_grip(hand_landmarks, frame, hand_size)
+    if not isThreadRunning('Move Grip'):
+        t_move_grip = threading.Thread(target=gripper.set_position, args=(hand_grip), name='Move Grip')
+        t_move_grip.start()
 
     rotate_wrist = get_rotate_wrist(hand_landmarks, frame, hand_size)
 
@@ -167,10 +170,16 @@ def move_robot(hand_landmarks, frame):
     move_joints[5] += w_pos 
 
     robot.movej(q=move_joints, a=ACCELERATION, v=VELOCITY)
+    if not isThreadRunning('Move Grip'):
+        t_move_grip = threading.Thread(
+            target=robot.movej,
+            args=(move_joints, ACCELERATION, VELOCITY),
+            name='Move Grip')
+        
+        t_move_grip.start()
 
 
-
-def send_status():
+def send_stats():
     while True:
         try:
             # joint_temperatures = rtde_receive.getJointTemperatures()
@@ -179,10 +188,8 @@ def send_status():
             print("Error:", e)
 
 
-        # Referência ao Realtime Database
         ref = db.reference('robot_data')
 
-        # Escrever dados no Realtime Database
         ref.set({
             'kau_trampa': joint_temperatures,
             'kau_trampa': joint_temperatures,
@@ -193,7 +200,9 @@ def send_status():
             
         })
         data = ref.get()
-        print(data)
+
+        #----------------------SHOW----------------------------
+        # print(data)
 
 
 
@@ -202,13 +211,10 @@ def get_commands():
         ref = db.reference('robot_commands')
 
         commands = ref.get()
-        print(commands)
 
-
-
-def grip_control(hand_landmarks, frame, hand_size):
-    hand_grip = get_hand_grip(hand_landmarks, frame, hand_size)
-    gripper.set_position(hand_grip)                                   
+        #----------------------SHOW----------------------------
+        # print(commands)
+                          
 
 
 
@@ -224,14 +230,27 @@ def grip_control(hand_landmarks, frame, hand_size):
 #     return robot_target_position
 
 
-
+def isThreadRunning(name):
+    for thread in threading.enumerate():
+        if thread.name == name:
+            if thread.is_alive():
+                print('IS RUNNING')
+            else:
+                print('IS NOT RUNNING')
+            return thread.is_alive()
+    
+    print(threading.enumerate())
+    return False
 
 
 
 
 #---------------------------------------MAIN--------------------------------------------
-_thread.start_new_thread(send_status, ())
-_thread.start_new_thread(get_commands, ())
+t_send_stats = threading.Thread(target=send_stats, name='Send stats to database')
+t_send_stats.start()
+
+t_get_commands = threading.Thread(target=get_commands, name='Get commands from database')
+t_get_commands.start()
 
 while True:
     ret, frame = vs.read()
@@ -243,7 +262,7 @@ while True:
     results = Hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     if results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0].landmark
-        _thread.start_new_thread(move_robot, (hand_landmarks, frame))
+        move_robot(hand_landmarks, frame)
 
     cv2.imshow("Hand Tracking", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):

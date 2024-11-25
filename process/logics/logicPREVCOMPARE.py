@@ -3,7 +3,6 @@ import mediapipe as mp
 import time
 import firebase_admin
 from firebase_admin import credentials, db
-import threading
 
 # Constants for hand tracking
 SCREEN_WIDTH = 700
@@ -125,12 +124,7 @@ def move_robot(hand_landmarks, frame):
     #----------------------SHOW----------------------------
     # print('Hand size:\t', hand_size)
 
-    hand_grip = get_hand_grip(hand_landmarks, frame, hand_size)
-    #----------------------SHOW----------------------------
-    # print('Hand grip:\t', hand_grip)
-    if not isThreadRunning('Move Grip'):
-        t_move_grip = threading.Thread(target=time.sleep, args=(0.25), name='Move Grip')
-        t_move_grip.start()
+    grip_control(hand_landmarks, frame, hand_size)
 
     rotate_wrist = get_rotate_wrist(hand_landmarks, frame, hand_size)
     #----------------------SHOW----------------------------
@@ -159,49 +153,53 @@ def move_robot(hand_landmarks, frame):
 
 
     #--------SIMULATE TIME OF SEND TO ROBOT----------------
-    if not isThreadRunning('Move Robot'):
-        t_move_robot = threading.Thread(target=time.sleep, args=(0.25), name='Move Robot')
-        t_move_robot.start()
-    
-
+    time.sleep(0.25)
 
 
 
 def send_stats():
-    while True:
-        try:
-            # joint_temperatures = rtde_receive.getJointTemperatures()
-            joint_temperatures = '0'
-        except Exception as e:
-            print("Error:", e)
+    try:
+        joint_temperatures = '0'
+    except Exception as e:
+        print("Error:", e)
 
 
-        # Referência ao Realtime Database
-        ref = db.reference('robot_data')
+    ref = db.reference('robot_data')
 
-        # Escrever dados no Realtime Database
-        ref.set({
-            'kau_trampa': joint_temperatures,
-            'kau_trampa': joint_temperatures,
-            'kau_trampa': joint_temperatures,
-            'kau_trampa': joint_temperatures,
-            'kau_trampa': joint_temperatures,
-            'kau_trampa': joint_temperatures,
-            
-        })
-        data = ref.get()
-        #----------------------SHOW----------------------------
-        # print('Robot status (example):\t', data)
+    ref.set({
+        'kau_trampa': joint_temperatures,
+        'kau_trampa': joint_temperatures,
+        'kau_trampa': joint_temperatures,
+        'kau_trampa': joint_temperatures,
+        'kau_trampa': joint_temperatures,
+        'kau_trampa': joint_temperatures,
+        
+    })
+    data = ref.get()
+
+    #----------------------SHOW----------------------------
+    # print('Robot status (example):\t', data)
 
 
 
 def get_commands():
-    while True:
-        ref = db.reference('robot_commands')
+    ref = db.reference('robot_commands')
 
-        commands = ref.get()
-        # print('Web commands (example):\t', commands)
+    commands = ref.get()
+    # print('Web commands (example):\t', commands)
 
+
+
+def grip_control(hand_landmarks, frame, hand_size):
+    hand_grip = get_hand_grip(hand_landmarks, frame, hand_size)
+
+
+
+    #----------------------SHOW----------------------------
+    # print('Hand grip:\t', hand_grip)
+
+    #--------SIMULATE TIME OF SEND TO GRIP----------------
+    time.sleep(0.25)
 
 
 
@@ -217,32 +215,21 @@ def get_commands():
 #     return robot_target_position
 
 
-def isThreadRunning(name):
-    for thread in threading.enumerate():
-        if thread.name == name:
-            # if thread.is_alive():
-            #     print('IS RUNNING')
-            # else:
-            #     print('IS NOT RUNNING')
-            return thread.is_alive()
-    
-    print(threading.enumerate())
-    return False
 
 
 
 
 #---------------------------------------MAIN--------------------------------------------
-t_send_stats = threading.Thread(target=send_stats, name='Send stats to database')
-t_send_stats.start()
-
-t_get_commands = threading.Thread(target=get_commands, name='Get commands from database')
-t_get_commands.start()
 
 while True:
     ret, frame = vs.read()
     if not ret:
         break
+
+    # send_stats()
+    # get_commands()
+
+
     frame = cv2.flip(frame, 1)
     hand_points, frame = find_hands(frame)
 
