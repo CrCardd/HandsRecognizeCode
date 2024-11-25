@@ -4,6 +4,8 @@ import time
 import firebase_admin
 from firebase_admin import credentials, db
 import threading
+import URBasic
+from rtde_receive import RTDEReceiveInterface
 
 # Constants for hand tracking
 SCREEN_WIDTH = 700
@@ -14,17 +16,38 @@ hands = mp.solutions.hands
 Hands = hands.Hands(max_num_hands=1)
 mpDraw = mp.solutions.drawing_utils
 
+# Initialize robot
+ROBOT_IP = '169.254.41.22'
+ACCELERATION = 0.9              # Robot acceleration value
+VELOCITY = 0.8                  # Robot speed value
+initial_joint_positions = [-1.7075, -1.6654, -1.5655, -0.1151, 1.5962, -0.0105]
 
-initial_joint_positions = [-1.7075, -1.4654, -1.5655, -0.1151, 1.5962, -0.0105]
 
-vs = cv2.VideoCapture(0) 
+# Initialize robot with URBasic
+print("initializing robot")
+rtde_receive = RTDEReceiveInterface(ROBOT_IP)
+robotModel = URBasic.robotModel.RobotModel()
+robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_IP, robotModel=robotModel)
+
+robot.reset_error()
+print("robot initialized")
+time.sleep(1)
+
+robot.movej(q=initial_joint_positions, a=ACCELERATION, v=VELOCITY)
+
+robot.init_realtime_control()
+time.sleep(0.5)
+
+
+vs = cv2.VideoCapture(0)
 vs.set(cv2.CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH)
 vs.set(cv2.CAP_PROP_FRAME_HEIGHT, SCREEN_HEIGHT)
 
-# cred = credentials.Certificate("C:\Users\Aluno\Desktop\CFR\HandsRecognizeCode\src\secrets.json")
-# firebase_admin.initialize_app(cred, {
-#     'databaseURL': 'https://robotarmtest-default-rtdb.firebaseio.com'
-# })
+cred = credentials.Certificate("C:\\Users\\Aluno\\Desktop\\CFR\\HandsRecognizeCode\\src\\secrets.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://robotarmtest-default-rtdb.firebaseio.com'
+})
+
 
 
 
@@ -58,8 +81,6 @@ def get_hand_grip(hand_landmarks, frame, hand_size):
         finger_distance = (finger_distance_x*finger_distance_x + finger_distance_y*finger_distance_y) ** 0.5
         hand_grip += finger_distance
 
-        cv2.putText(frame, str("."), (crr_center_x, crr_center_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (100,50,255 - finger_distance), 2)
-        cv2.line(frame, (int(w * hand_landmarks[i].x), int(h * hand_landmarks[i].y)), (crr_center_x, crr_center_y), (20,finger_distance,280 - finger_distance), 1)  #AAAAAAAAAAAAAAAAAAAAAA
     hand_grip /= 4
 
     hand_grip = (int((1 - hand_grip / (hand_size * 1) ) * 100))
@@ -78,8 +99,6 @@ def get_hand_size(hand_landmarks, frame):
     hand_distance_size_x = w * abs(hand_landmarks[1].x - hand_landmarks[17].x)
     hand_distance_size_y = h * abs(hand_landmarks[1].y - hand_landmarks[17].y)
     hand_size = (hand_distance_size_x**2 + hand_distance_size_y**2) ** 0.5
-
-    cv2.line(frame, (int(hand_landmarks[1].x  * w), int(hand_landmarks[1].y * h)), (int(hand_landmarks[17].x * w), int(hand_landmarks[17].y  * h)), (0, 255, 255), 2)
 
     return hand_size
 
@@ -107,7 +126,6 @@ def get_rotate_wrist(hand_landmarks, frame, hand_size):
 
 
 def move_robot(hand_landmarks, frame):
-
     if not hand_landmarks:
         return
     
@@ -119,22 +137,9 @@ def move_robot(hand_landmarks, frame):
     }
 
 
-    cv2.putText(frame, str("(0)"), (hand_center['x'], hand_center['y']), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
-
     hand_size = get_hand_size(hand_landmarks, frame)
-    #----------------------SHOW----------------------------
-    # print('Hand size:\t', hand_size)
-
-    hand_grip = get_hand_grip(hand_landmarks, frame, hand_size)
-    #----------------------SHOW----------------------------
-    # print('Hand grip:\t', hand_grip)
-    # if not isThreadRunning('Move Grip'):
-        # t_move_grip = threading.Thread(target=time.sleep, args=(1), name='Move Grip')
-        # t_move_grip.start()
 
     rotate_wrist = get_rotate_wrist(hand_landmarks, frame, hand_size)
-    #----------------------SHOW----------------------------
-    # print('Rotate wrist:\t', rotate_wrist)
 
     displacement_x = (hand_center['x'] - (SCREEN_WIDTH/2)) / SCREEN_WIDTH
     displacement_y = (hand_center['y'] - (SCREEN_HEIGHT/2)) / SCREEN_HEIGHT
@@ -154,54 +159,53 @@ def move_robot(hand_landmarks, frame):
     move_joints[0] += x_pos  
     move_joints[1] += y_pos 
     move_joints[5] += w_pos 
-    #----------------------SHOW----------------------------
-    # print('Move joint:\t', move_joints)
 
-
-    #--------SIMULATE TIME OF SEND TO ROBOT----------------
-    if not isThreadRunning('MoveRobot'):
-        t_move_robot = threading.Thread(target=time.sleep, args=(1), name='MoveRobot')
+    # robot.movej(q=move_joints, a=ACCELERATION, v=VELOCITY)
+    if not isThreadRunning('Move Robot'):
+        t_move_robot = threading.Thread(
+            target=robot.movej,
+            args=(move_joints, ACCELERATION, VELOCITY),
+            name='Move Robot')
+        
         t_move_robot.start()
-    
 
 
+def send_stats():
+    while True:
+        try:
+            # joint_temperatures = rtde_receive.getJointTemperatures()
+            joint_temperatures = '0'
+        except Exception as e:
+            print("Error:", e)
 
 
-# def send_stats():
-#     while True:
-#         try:
-#             # joint_temperatures = rtde_receive.getJointTemperatures()
-#             joint_temperatures = '0'
-#         except Exception as e:
-#             print("Error:", e)
+        ref = db.reference('robot_data')
 
-
-#         # Referência ao Realtime Database
-#         ref = db.reference('robot_data')
-
-#         # Escrever dados no Realtime Database
-#         ref.set({
-#             'kau_trampa': joint_temperatures,
-#             'kau_trampa': joint_temperatures,
-#             'kau_trampa': joint_temperatures,
-#             'kau_trampa': joint_temperatures,
-#             'kau_trampa': joint_temperatures,
-#             'kau_trampa': joint_temperatures,
+        ref.set({
+            'kau_trampa': joint_temperatures,
+            'kau_trampa': joint_temperatures,
+            'kau_trampa': joint_temperatures,
+            'kau_trampa': joint_temperatures,
+            'kau_trampa': joint_temperatures,
+            'kau_trampa': joint_temperatures,
             
-#         })
-#         data = ref.get()
-#         #----------------------SHOW----------------------------
-#         # print('Robot status (example):\t', data)
+        })
+        data = ref.get()
+
+        #----------------------SHOW----------------------------
+        # print(data)
 
 
 
-# def get_commands():
-#     while True:
-#         ref = db.reference('robot_commands')
+def get_commands():
+    while True:
+        ref = db.reference('robot_commands')
 
-#         commands = ref.get()
-#         # print('Web commands (example):\t', commands)
+        commands = ref.get()
 
+        #----------------------SHOW----------------------------
+        # print(commands)
+                          
 
 
 
@@ -220,10 +224,10 @@ def move_robot(hand_landmarks, frame):
 def isThreadRunning(name):
     for thread in threading.enumerate():
         if thread.name == name:
-            # if thread.is_alive():
-            #     print('IS RUNNING')
-            # else:
-            #     print('IS NOT RUNNING')
+            if thread.is_alive():
+                print('IS RUNNING')
+            else:
+                print('IS NOT RUNNING')
             return thread.is_alive()
     
     print(threading.enumerate())
@@ -246,11 +250,9 @@ while True:
     frame = cv2.flip(frame, 1)
     hand_points, frame = find_hands(frame)
 
-    
     results = Hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     if results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0].landmark
-
         move_robot(hand_landmarks, frame)
 
     cv2.imshow("Hand Tracking", frame)
@@ -260,3 +262,4 @@ while True:
 
 vs.release()
 cv2.destroyAllWindows()
+rtde_receive.disconnect()
