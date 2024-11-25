@@ -6,6 +6,7 @@ from firebase_admin import credentials, db
 import threading
 import URBasic
 from rtde_receive import RTDEReceiveInterface
+import socket
 
 # Constants for hand tracking
 SCREEN_WIDTH = 700
@@ -24,13 +25,23 @@ initial_joint_positions = [-1.7075, -1.6654, -1.5655, -0.1151, 1.5962, -0.0105]
 
 
 # Initialize robot with URBasic
-print("initializing robot")
+print("Initializing robot...")
+
 rtde_receive = RTDEReceiveInterface(ROBOT_IP)
+
 robotModel = URBasic.robotModel.RobotModel()
 robot = URBasic.urScriptExt.UrScriptExt(host=ROBOT_IP, robotModel=robotModel)
 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((ROBOT_IP, 29999))
+
+# printa mensagem de retorno primária de conexão socket com o robô
+welcome_message = s.recv(1024).decode()
+print('Welcome message:', welcome_message)
+
 robot.reset_error()
-print("robot initialized")
+
+print("Robot initialized!")
 time.sleep(1)
 
 robot.movej(q=initial_joint_positions, a=ACCELERATION, v=VELOCITY)
@@ -170,7 +181,7 @@ def move_robot(hand_landmarks, frame):
         t_move_robot.start()
 
 
-def send_stats(voltage, current, robot_voltage, status, pose, temp):
+def send_data(voltage, current, robot_voltage, status, pose, temp):
     
     ref = db.reference()
 
@@ -185,11 +196,12 @@ def send_stats(voltage, current, robot_voltage, status, pose, temp):
     })
 
 
-def get_commands():
-    while True:
-        ref = db.reference('robot_commands')
+def get_data():
+        ref = db.reference()
 
-        commands = ref.get()
+        response = ref.child('userAction').get()
+
+        return response['action']
 
         #----------------------SHOW----------------------------
         # print(commands)
@@ -238,11 +250,22 @@ while True:
     results = Hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     if results.multi_hand_landmarks:
 
+        # capture all data needed from the robot using RTDERecieveInterface
         joint_temperatures = rtde_receive.getJointTemperatures()
         is_connected = rtde_receive.isConnected()
         safety = rtde_receive.getSafetyStatusBits()
+        tcp_pose = rtde_receive.getActualTCPPose()
+        main_voltage = rtde_receive. getActualMainVoltage()
+        robot_voltage = rtde_receive.getActualRobotVoltage()
+        current = rtde_receive.getActualRobotCurrent()
 
-        send_stats(safety, safety, safety, safety, joint_temperatures, joint_temperatures)
+        # connects to the database and updated the lastData values to the newest ones
+        send_data(main_voltage, robot_voltage, current, safety, joint_temperatures, joint_temperatures)
+
+        if get_data() == True:
+            s.sendall('unlock protective stop\n'.encode())
+            response = s.recv(1024)
+            print("Response to unlock protective stop:", response)
 
         hand_landmarks = results.multi_hand_landmarks[0].landmark
         move_robot(hand_landmarks, frame)
